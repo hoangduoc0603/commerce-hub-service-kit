@@ -1,0 +1,18 @@
+# Sinh bởi platform/scripts/github/repo-bootstrap.sh. Thêm ecosystem bằng cách chạy lại script với --ecosystems.
+# Chuẩn: docs/standards/ci-cd.md, mục "Nhánh và cập nhật phụ thuộc".
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

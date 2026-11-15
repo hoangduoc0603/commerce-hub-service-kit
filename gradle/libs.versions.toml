@@ -1,0 +1,15 @@
+# Version mà Spring Boot không quản lý thì ghim ở đây. JUnit, Testcontainers, Spring lấy từ BOM của Boot,
+# không ghim lại (java-library.md, mục "Cấu trúc repo"). Dependabot ecosystem gradle cập nhật file này.
+[versions]
+# Mỗi bản service-kit gắn với một minor Spring Boot (ticket 11, Q15). Đổi minor thì tăng MINOR của kit.
+spring-boot = "4.1.2"
+# Boot không quản lý ArchUnit. 1.5.1 có artifact junit6, khớp JUnit 6.0.3 mà Boot 4.1.2 quản lý.
+archunit = "1.5.1"
+
+[libraries]
+# Bước 5: gradle-plugin phụ thuộc artifact này để script áp được id 'org.springframework.boot' không cần version.
+spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
+# Bước 3–4: BOM của Boot, dùng làm platform() để lấy version JUnit và Testcontainers.
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+# Bước 3: luật kiến trúc.
+archunit-junit6 = { module = "com.tngtech.archunit:archunit-junit6", version.ref = "archunit" }

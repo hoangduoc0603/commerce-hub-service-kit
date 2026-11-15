@@ -1,0 +1,56 @@
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.kotlin
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+# >>> commerce-hub baseline (platform/scripts/github) >>>
+# Credential không bao giờ vào Git, kể cả repo private (ADR-0006, docs/standards/ci-cd.md "Repo public").
+# .gitignore chỉ chặn theo TÊN file; nội dung secret do push protection của GitHub bắt.
+.env
+.env.*
+!.env.example
+*.kubeconfig
+kubeconfig*
+.kube/
+tskey-*
+*.tskey
+tailscale-authkey*
+sealed-secrets-key*
+*.key
+# <<< commerce-hub baseline <<<

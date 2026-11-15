@@ -1,0 +1,5 @@
+plugins {
+    // Mỗi file src/main/groovy/<id>.gradle thành một plugin có id là tên file.
+    // Plugin này tự áp java-gradle-plugin: đăng ký plugin, sinh marker khi publish, bơm classpath cho TestKit.
+    id 'groovy-gradle-plugin'
+}

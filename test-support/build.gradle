@@ -1,0 +1,13 @@
+plugins {
+    // java-library thay vì java: có cấu hình 'api' và 'implementation'. Consumer chỉ thấy phần khai 'api'
+    // (ở bước 3 là ArchUnit, vì class luật dùng @ArchTest), phần còn lại không lọt vào classpath của họ.
+    id 'java-library'
+}
+
+java {
+    // Biên dịch và chạy test bằng JDK 25 đã cài trên máy; không dùng plugin foojay tự tải JDK
+    // (java-library.md, bảng lựa chọn).
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}

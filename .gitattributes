@@ -1,0 +1,4 @@
+# Script shell luôn LF, script Windows luôn CRLF, jar là nhị phân (git không đụng vào).
+gradlew  text eol=lf
+*.bat    text eol=crlf
+*.jar    binary

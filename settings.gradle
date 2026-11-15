@@ -1,0 +1,17 @@
+// Tên build gốc. Build gốc không được publish, tên chỉ hiện trong log và IDE.
+rootProject.name = 'service-kit'
+
+dependencyResolutionManagement {
+    // Mặc định là PREFER_PROJECT: module tự khai repositories {} sẽ đè danh sách ở đây.
+    // FAIL_ON_PROJECT_REPOS làm build lỗi trong trường hợp đó, nên chỉ có một chỗ quyết định
+    // code tải từ đâu. Gradle khuyên dùng chế độ này cho build cần an toàn chuỗi cung ứng.
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    repositories {
+        // Mọi thứ kit cần (Spring Boot Gradle plugin, ArchUnit, Testcontainers) đều có trên Central.
+        mavenCentral()
+    }
+}
+
+// Module chỉ có ở G0-18. Ticket 25 thêm 'workspace-access', ticket 28 thêm 'web' và 'ids'.
+// Tên module cũng là artifactId khi publish (java-library.md, mục "Cấu trúc repo").
+include 'gradle-plugin', 'test-support'
