@@ -2,9 +2,12 @@ plugins {
     // java-library thay vì java: có cấu hình 'api' và 'implementation'. Consumer chỉ thấy phần khai 'api',
     // phần còn lại không lọt vào classpath của họ.
     id 'java-library'
-    // Publish jar, POM và Gradle Module Metadata. Bước 6 chỉ publish vào repository cho TestKit.
-    id 'maven-publish'
+    // Cấu hình publish chung của kit (build-logic): repository, sources/javadoc, POM, chặn version local.
+    id 'commercehub.kit-publishing'
 }
+
+// Đi vào <description> của POM.
+description = 'Luật ArchUnit cho layout hexagonal và cấu hình Testcontainers dùng chung cho test của mọi service'
 
 java {
     // Biên dịch và chạy test bằng JDK 25 đã cài trên máy; không dùng plugin foojay tự tải JDK
@@ -53,19 +56,10 @@ tasks.named('test') {
 
 publishing {
     publications {
-        // Một publication từ component java: jar, POM và Gradle Module Metadata (.module).
-        // Bước 7 bổ sung sources/javadoc, metadata của POM và repository GitHub Packages.
+        // Một publication từ component java: jar, sources, javadoc, POM và Gradle Module Metadata (.module).
+        // Repository và metadata của POM đến từ plugin commercehub.kit-publishing.
         mavenJava(MavenPublication) {
             from components.java
-        }
-    }
-    repositories {
-        // Repository dạng thư mục, chỉ để test TestKit của gradle-plugin tải test-support như một service thật
-        // tải từ GitHub Packages. Nằm trong build/ nên không vào git và bị xóa khi clean.
-        // Tên 'testKit' sinh ra task publishAllPublicationsToTestKitRepository.
-        maven {
-            name = 'testKit'
-            url = layout.settingsDirectory.dir('build/testkit-repo')
         }
     }
 }

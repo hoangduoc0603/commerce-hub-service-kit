@@ -1,0 +1,9 @@
+// Build riêng chứa convention plugin nội bộ của repo kit. Được include từ settings.gradle gốc,
+// không publish, không phải module của kit.
+rootProject.name = 'build-logic'
+
+dependencyResolutionManagement {
+    // Plugin nội bộ chỉ dùng API của Gradle (maven-publish, java), không tải gì từ ngoài.
+    // FAIL_ON_PROJECT_REPOS và không khai repository nào: ai thêm phụ thuộc ngoài sẽ phải sửa ở đây, có chủ đích.
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+}

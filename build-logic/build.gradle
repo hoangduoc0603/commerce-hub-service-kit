@@ -1,0 +1,4 @@
+plugins {
+    // Như module gradle-plugin: mỗi file src/main/groovy/<id>.gradle thành một plugin, id là tên file.
+    id 'groovy-gradle-plugin'
+}

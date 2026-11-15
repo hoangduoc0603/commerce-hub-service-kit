@@ -3,7 +3,13 @@ plugins {
     // Plugin này tự áp java-gradle-plugin: đăng ký plugin, sinh marker khi publish, và cho TestKit
     // biết classpath của plugin đang test (withPluginClasspath()).
     id 'groovy-gradle-plugin'
+    // Cấu hình publish chung của kit (build-logic). Publication 'pluginMaven' và marker do java-gradle-plugin
+    // tự tạo khi có maven-publish; plugin chung chỉ thêm repository, sources/javadoc, POM và chặn version local.
+    id 'commercehub.kit-publishing'
 }
+
+// Đi vào <description> của POM.
+description = 'Convention plugin commercehub.spring-service: Java 25, Spring Boot 4.1, JUnit Platform, luật kiến trúc'
 
 java {
     // Script được biên dịch thành class Java 25, nên Gradle của service phải chạy trên JDK 25. Mọi build của

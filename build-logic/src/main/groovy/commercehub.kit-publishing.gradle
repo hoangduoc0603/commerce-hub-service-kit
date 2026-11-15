@@ -1,0 +1,91 @@
+// Cấu hình publish chung cho mọi module của service-kit (java-library.md, mục "Version, publish, bất biến").
+// Module tự tạo publication của mình: test-support khai 'mavenJava'; gradle-plugin có sẵn 'pluginMaven' và
+// marker do java-gradle-plugin sinh. Plugin này chỉ thêm phần chung cho mọi publication.
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+java {
+    // Kèm -sources.jar và -javadoc.jar: IDE của service nhảy được vào mã nguồn và đọc Javadoc của kit.
+    // Javadoc jar của gradle-plugin chỉ có class adapter mà groovy-gradle-plugin sinh cho script; GitHub
+    // Packages không bắt buộc javadoc, giữ để mọi module có cùng bộ artifact.
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(Javadoc).configureEach {
+    // Bật doclint nhưng bỏ nhóm 'missing' (thiếu Javadoc cho constructor, tham số...): kit dùng nội bộ, Javadoc
+    // viết ở chỗ cần giải thích. Không bỏ thì mỗi build in cảnh báo cho constructor mặc định và cho class adapter
+    // mà groovy-gradle-plugin sinh tự động. Lỗi HTML hay tham chiếu sai trong Javadoc vẫn làm build đỏ.
+    options.addBooleanOption('Xdoclint:all,-missing', true)
+    // Javadoc từ JDK 23 nhúng bộ font DejaVu vào mỗi bản HTML; bỏ font thì javadoc jar từ khoảng 4,1 MB
+    // xuống khoảng 0,1 MB (đo ở G0-18 bước 7). Trình duyệt dùng font hệ thống thay thế.
+    options.addBooleanOption('-no-fonts', true)
+}
+
+publishing {
+    repositories {
+        // Nơi publish thật (ticket 11, Q14). Owner phải viết thường trong URL.
+        // name = 'githubPackages': Gradle đọc credentials từ property githubPackagesUsername và
+        // githubPackagesPassword (CI: biến môi trường ORG_GRADLE_PROJECT_githubPackagesUsername/...Password),
+        // và chỉ đòi khi task publish lên repository này có trong build.
+        maven {
+            name = 'githubPackages'
+            url = 'https://maven.pkg.github.com/hoangduoc0603/commerce-hub-service-kit'
+            credentials(PasswordCredentials)
+        }
+        // Repository dạng thư mục cho test TestKit của gradle-plugin và để xem trước artifact khi build local.
+        // Nằm trong build/ nên không vào git và bị xóa khi clean.
+        maven {
+            name = 'testKit'
+            url = layout.settingsDirectory.dir('build/testkit-repo')
+        }
+    }
+
+    // configureEach: áp cho cả publication mà module hay java-gradle-plugin tạo sau dòng này.
+    publications.withType(MavenPublication).configureEach {
+        pom {
+            // name là artifactId của module; description khai ở build.gradle của từng module.
+            name = project.name
+            description = project.description
+            url = 'https://github.com/hoangduoc0603/commerce-hub-service-kit'
+            licenses {
+                license {
+                    name = 'MIT License'
+                    url = 'https://opensource.org/license/mit'
+                }
+            }
+            developers {
+                // Chỉ id và trang GitHub: repo public, không ghi email hay tên thật vào artifact.
+                developer {
+                    id = 'hoangduoc0603'
+                    url = 'https://github.com/hoangduoc0603'
+                }
+            }
+            scm {
+                url = 'https://github.com/hoangduoc0603/commerce-hub-service-kit'
+                connection = 'scm:git:https://github.com/hoangduoc0603/commerce-hub-service-kit.git'
+            }
+        }
+    }
+}
+
+// Chặn publish lên GitHub Packages khi version không phải bản phát hành X.Y.Z (quyết định Q2 của ticket).
+// Build local có version 0.0.0-local (gradle.properties); chỉ CI truyền version thật từ tag.
+// Đọc version thành chuỗi lúc cấu hình: khối doFirst không được giữ tham chiếu tới project
+// (yêu cầu của configuration cache).
+def releaseVersion = project.version.toString()
+tasks.withType(PublishToMavenRepository).configureEach {
+    // Lọc theo tên task (publish<Publication>PublicationTo<Repository>Repository): tên có ngay khi task được
+    // tạo, còn thuộc tính repository thì chưa được gán lúc này và bị bỏ khi lưu configuration cache.
+    if (name.endsWith('ToGithubPackagesRepository')) {
+        doFirst {
+            if (!(releaseVersion ==~ /\d+\.\d+\.\d+/)) {
+                throw new GradleException("Không publish version '${releaseVersion}' lên GitHub Packages: " +
+                        "chỉ publish bản X.Y.Z từ tag vX.Y.Z trên CI (-Pversion=X.Y.Z).")
+            }
+        }
+    }
+}

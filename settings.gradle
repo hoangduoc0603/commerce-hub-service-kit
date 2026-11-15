@@ -1,3 +1,10 @@
+pluginManagement {
+    // Build logic nội bộ của repo kit (cấu hình publish dùng chung cho mọi module), không publish ra ngoài.
+    // includeBuild trong pluginManagement: các module áp được plugin của build-logic bằng id trong plugins {}.
+    // Gradle khuyên cách này thay cho allprojects {}/subprojects {} (java-library.md, mục "Cấu trúc repo").
+    includeBuild('build-logic')
+}
+
 // Tên build gốc. Build gốc không được publish, tên chỉ hiện trong log và IDE.
 rootProject.name = 'service-kit'
 
