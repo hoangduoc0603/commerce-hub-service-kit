@@ -1,5 +1,34 @@
 plugins {
     // Mỗi file src/main/groovy/<id>.gradle thành một plugin có id là tên file.
-    // Plugin này tự áp java-gradle-plugin: đăng ký plugin, sinh marker khi publish, bơm classpath cho TestKit.
+    // Plugin này tự áp java-gradle-plugin: đăng ký plugin, sinh marker khi publish, và cho TestKit
+    // biết classpath của plugin đang test (withPluginClasspath()).
     id 'groovy-gradle-plugin'
+}
+
+java {
+    // Script được biên dịch thành class Java 25, nên Gradle của service phải chạy trên JDK 25. Mọi build của
+    // dự án đã chạy JDK 25 (Mac và CI), nên không hạ xuống 17 như plugin của Spring Boot (Q3 bước 5).
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+dependencies {
+    // Đưa plugin Spring Boot vào classpath của convention plugin, để script áp được
+    // id 'org.springframework.boot' mà không ghi version. Version đến từ catalog của kit: đây là chỗ
+    // kit ghim minor Spring Boot cho mọi service.
+    implementation libs.spring.boot.gradle.plugin
+
+    // Test của module này là test TestKit: dựng project tạm, chạy Gradle thật với plugin đang viết.
+    // java-gradle-plugin tự thêm gradleTestKit() vào testImplementation.
+    testImplementation platform(libs.spring.boot.dependencies)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    // Gradle 9 không tự nạp launcher của JUnit Platform nữa; thiếu dòng này thì task test lỗi ngay khi chạy.
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // Test so version Spring Boot mà project tạm nhận được với version trong catalog, không ghi cứng "4.1.2".
+    systemProperty 'kit.springBootVersion', libs.versions.spring.boot.get()
 }

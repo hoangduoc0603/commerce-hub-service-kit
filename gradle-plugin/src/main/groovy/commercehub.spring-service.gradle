@@ -1,0 +1,41 @@
+// Convention plugin cho mọi service Spring Boot (ticket 11, story 58): service chỉ còn phần riêng của nó.
+// Id plugin là tên file. Script Groovy precompiled không có package, nên namespace 'commercehub.' nằm trong tên.
+//
+// Plugin KHÔNG khai repository. Service khai repository trong settings.gradle với FAIL_ON_PROJECT_REPOS
+// (Gradle Best Practices); plugin mà khai repository thì service đó không áp được plugin (Q1 bước 5).
+
+// Import đặt trước khối plugins {}. Class này có trên classpath nhờ phụ thuộc spring-boot-gradle-plugin
+// của module gradle-plugin.
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
+plugins {
+    id 'java'
+    // Không ghi version: khối plugins {} của script precompiled không nhận version. Version là bản
+    // spring-boot-gradle-plugin mà module gradle-plugin phụ thuộc, tức minor Spring Boot mà kit ghim.
+    id 'org.springframework.boot'
+}
+
+java {
+    // Toolchain 25: biên dịch, chạy test và bootRun bằng JDK 25 bất kể Gradle chạy trên JDK nào.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+dependencies {
+    // BOM của chính bản Spring Boot plugin đang áp: service khai phụ thuộc Spring không cần version.
+    // Dùng platform() của Gradle thay vì plugin io.spring.dependency-management (java-library.md, bảng lựa chọn).
+    // testImplementation kế thừa implementation nên test cũng nhận BOM.
+    implementation platform(SpringBootPlugin.BOM_COORDINATES)
+    // annotationProcessor không kế thừa implementation. Khai để processor như spring-boot-configuration-processor
+    // cũng lấy version từ BOM khi service thêm vào.
+    annotationProcessor platform(SpringBootPlugin.BOM_COORDINATES)
+    // Gradle 9 không tự nạp launcher của JUnit Platform; version lấy từ BOM.
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// withType thay vì named('test'): áp cho cả bộ test khác service thêm sau (ví dụ integrationTest).
+// configureEach để Gradle chỉ cấu hình task khi task đó thật sự chạy.
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
