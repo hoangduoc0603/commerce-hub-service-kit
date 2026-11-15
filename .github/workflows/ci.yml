@@ -1,0 +1,28 @@
+# CI của service-kit: workflow mỏng, mọi bước nằm trong reusable workflow java-library của repo platform.
+name: ci
+
+on:
+  push:
+    branches: [main]
+    # Tag phát hành vX.Y.Z: chạy check rồi publish lên GitHub Packages.
+    tags: ['v*']
+  pull_request:
+
+# Mặc định chỉ đọc; job gọi reusable workflow nâng đúng phần nó cần.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Hủy lần chạy cũ của cùng PR khi có commit mới; không hủy lần chạy trên main hay trên tag.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  java-library:
+    # Ghim SHA đầy đủ của commit trong platform: re-run dùng lại đúng workflow của lần chạy đầu.
+    # platform chưa có release (ticket G0-17), nên comment ghi commit trên main thay cho tên release.
+    uses: hoangduoc0603/commerce-hub-platform/.github/workflows/java-library.yml@5f9e1cee6e26e1ca0f8c3c5476ab8ba5cf95614a # main, 2026-11-15
+    # Quyền tối đa mà các job trong java-library.yml được dùng (README của platform):
+    permissions:
+      contents: write
+      packages: write
