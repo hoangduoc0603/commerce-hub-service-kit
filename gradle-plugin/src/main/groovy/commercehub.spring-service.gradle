@@ -39,3 +39,18 @@ dependencies {
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
+
+// Tọa độ của chính kit (group, version), do task kitCoordinates của module gradle-plugin ghi vào jar lúc build.
+// getClass() là class của script này, nên getResourceAsStream đọc từ jar plugin.
+def kitCoordinates = new Properties()
+getClass().getResourceAsStream('/io/github/hoangduoc0603/commercehub/kit/gradleplugin/commercehub-kit.properties').withCloseable {
+    kitCoordinates.load(it)
+}
+
+dependencies {
+    // Luật ArchUnit và cấu hình Testcontainers (quyết định Q4 của ticket). Cùng version với plugin: hai artifact
+    // build từ một commit, publish từ cùng một tag, nên service không phải ghim version thứ hai.
+    // Trong composite build (bước 8), Gradle thay phụ thuộc này bằng project test-support theo group:name,
+    // bỏ qua version.
+    testImplementation "${kitCoordinates.group}:test-support:${kitCoordinates.version}"
+}

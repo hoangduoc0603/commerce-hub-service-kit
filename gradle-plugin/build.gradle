@@ -27,8 +27,43 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Plugin cần biết tọa độ của chính nó để thêm test-support cùng version (bước 6). Lúc build, ghi group và
+// version của project vào một file properties; file nằm trong jar plugin, script đọc lại khi áp vào service.
+// WriteProperties là task có sẵn của Gradle: chỉ ghi lại khi giá trị đổi, và ghi theo thứ tự cố định
+// (không có dòng ngày giờ) nên jar build lại vẫn giống hệt.
+def kitCoordinates = tasks.register('kitCoordinates', WriteProperties) {
+    destinationFile = layout.buildDirectory.file('generated/kit-coordinates/commercehub-kit.properties')
+    // Đọc giá trị lúc cấu hình thành chuỗi, không giữ tham chiếu tới project trong task
+    // (yêu cầu của configuration cache).
+    property('group', project.group.toString())
+    property('version', project.version.toString())
+}
+
+tasks.named('processResources') {
+    // from(taskProvider): lấy output của task và tự thêm phụ thuộc giữa hai task.
+    // Đặt trong thư mục theo package của module để không trùng tên với resource của jar khác trên classpath.
+    from(kitCoordinates) {
+        into 'io/github/hoangduoc0603/commercehub/kit/gradleplugin'
+    }
+}
+
+// Repository dạng thư mục mà :test-support publish vào để service tạm của TestKit tải được test-support
+// (khai trong test-support/build.gradle). layout.settingsDirectory là thư mục gốc của repo kit.
+def testKitRepository = layout.settingsDirectory.dir('build/testkit-repo')
+
 tasks.named('test') {
     useJUnitPlatform()
-    // Test so version Spring Boot mà project tạm nhận được với version trong catalog, không ghi cứng "4.1.2".
+    // Publish test-support vào repository trên trước khi chạy test. Tham chiếu task bằng đường dẫn chuỗi:
+    // không cấu hình chéo project, tương thích configuration cache.
+    dependsOn ':test-support:publishAllPublicationsToTestKitRepository'
+    // Khai repository là input: test-support đổi thì test của plugin chạy lại, không bị coi là up-to-date.
+    // Bỏ maven-metadata.xml: mỗi lần publish Gradle ghi lại thời điểm 'lastUpdated' vào file này, giữ nó
+    // thì test TestKit (chậm) chạy lại ở mọi lần build dù test-support không đổi.
+    inputs.files(fileTree(testKitRepository) { exclude '**/maven-metadata*' })
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+            .withPropertyName('testKitRepository')
+    systemProperty 'kit.testKitRepo', testKitRepository.asFile.absolutePath
+    // Test so version Spring Boot và version kit mà service tạm nhận được với nguồn của chúng, không ghi cứng.
     systemProperty 'kit.springBootVersion', libs.versions.spring.boot.get()
+    systemProperty 'kit.version', project.version.toString()
 }

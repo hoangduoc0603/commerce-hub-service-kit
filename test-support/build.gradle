@@ -2,6 +2,8 @@ plugins {
     // java-library thay vì java: có cấu hình 'api' và 'implementation'. Consumer chỉ thấy phần khai 'api',
     // phần còn lại không lọt vào classpath của họ.
     id 'java-library'
+    // Publish jar, POM và Gradle Module Metadata. Bước 6 chỉ publish vào repository cho TestKit.
+    id 'maven-publish'
 }
 
 java {
@@ -47,4 +49,23 @@ dependencies {
 tasks.named('test') {
     // Chạy test trên JUnit Platform (Jupiter). Không có dòng này Gradle không chạy test JUnit 6.
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        // Một publication từ component java: jar, POM và Gradle Module Metadata (.module).
+        // Bước 7 bổ sung sources/javadoc, metadata của POM và repository GitHub Packages.
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        // Repository dạng thư mục, chỉ để test TestKit của gradle-plugin tải test-support như một service thật
+        // tải từ GitHub Packages. Nằm trong build/ nên không vào git và bị xóa khi clean.
+        // Tên 'testKit' sinh ra task publishAllPublicationsToTestKitRepository.
+        maven {
+            name = 'testKit'
+            url = layout.settingsDirectory.dir('build/testkit-repo')
+        }
+    }
 }
