@@ -1,6 +1,6 @@
 plugins {
-    // java-library thay vì java: có cấu hình 'api' và 'implementation'. Consumer chỉ thấy phần khai 'api'
-    // (ở bước 3 là ArchUnit, vì class luật dùng @ArchTest), phần còn lại không lọt vào classpath của họ.
+    // java-library thay vì java: có cấu hình 'api' và 'implementation'. Consumer chỉ thấy phần khai 'api',
+    // phần còn lại không lọt vào classpath của họ.
     id 'java-library'
 }
 
@@ -10,4 +10,26 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+dependencies {
+    // 'api': service dùng HexagonalRules (field kiểu ArchRule) và @AnalyzeClasses/@ArchTest/ArchTests,
+    // nên ArchUnit phải nằm trên classpath compile của service. archunit-junit6 kéo theo engine ArchUnit
+    // ở scope runtime, nên JUnit Platform của service tự tìm thấy các field @ArchTest.
+    // Version ghim trong catalog vì Spring Boot không quản lý ArchUnit.
+    api libs.archunit.junit6
+
+    // BOM của Boot chỉ cho test của module này (version JUnit, spring-core). Không đưa vào 'api':
+    // service lấy BOM từ convention plugin (bước 5), không phải từ test-support.
+    testImplementation platform(libs.spring.boot.dependencies)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    // Gradle 9 không tự nạp launcher của JUnit Platform nữa; thiếu dòng này thì task test lỗi ngay khi chạy.
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Chỉ để fixture 'springindomain' có một class domain gọi Spring thật.
+    testImplementation 'org.springframework:spring-core'
+}
+
+tasks.named('test') {
+    // Chạy test trên JUnit Platform (Jupiter). Không có dòng này Gradle không chạy test JUnit 6.
+    useJUnitPlatform()
 }
