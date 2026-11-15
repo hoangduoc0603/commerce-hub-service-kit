@@ -42,9 +42,22 @@ tasks.withType(Test).configureEach {
 
 // Tọa độ của chính kit (group, version), do task kitCoordinates của module gradle-plugin ghi vào jar lúc build.
 // getClass() là class của script này, nên getResourceAsStream đọc từ jar plugin.
+def kitCoordinatesResource = '/io/github/hoangduoc0603/commercehub/kit/gradleplugin/commercehub-kit.properties'
+def kitCoordinatesStream = getClass().getResourceAsStream(kitCoordinatesResource)
+// Thiếu file hay thiếu khóa là lỗi build của chính kit (task kitCoordinates hoặc processResources của module
+// gradle-plugin). Báo rõ thay vì NullPointerException hay phụ thuộc "null:test-support:null" (review G0-18).
+if (kitCoordinatesStream == null) {
+    throw new GradleException("commercehub.spring-service: jar plugin thiếu ${kitCoordinatesResource}. " +
+            'Kiểm task kitCoordinates và processResources của module gradle-plugin trong service-kit.')
+}
 def kitCoordinates = new Properties()
-getClass().getResourceAsStream('/io/github/hoangduoc0603/commercehub/kit/gradleplugin/commercehub-kit.properties').withCloseable {
+kitCoordinatesStream.withCloseable {
     kitCoordinates.load(it)
+}
+['group', 'version'].each { key ->
+    if (!kitCoordinates.getProperty(key)) {
+        throw new GradleException("commercehub.spring-service: ${kitCoordinatesResource} thiếu khóa '${key}'.")
+    }
 }
 
 dependencies {

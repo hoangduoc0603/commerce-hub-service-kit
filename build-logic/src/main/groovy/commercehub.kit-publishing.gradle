@@ -49,7 +49,9 @@ publishing {
         pom {
             // name là artifactId của module; description khai ở build.gradle của từng module.
             name = project.name
-            description = project.description
+            // provider: đọc description lúc sinh POM, không phải lúc publication được tạo. Đọc thẳng thì module
+            // khai publishing trước dòng description sẽ ra POM thiếu <description> mà build vẫn xanh (review G0-18).
+            description = providers.provider { project.description }
             url = 'https://github.com/hoangduoc0603/commerce-hub-service-kit'
             licenses {
                 license {
